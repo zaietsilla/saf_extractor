@@ -26,41 +26,43 @@ int main()
 {
 	FILE* stream;
 
-	if (fopen_s(&stream, "data.sah", "rb") != 0)
+	if (!fopen_s(&stream, "data.sah", "rb"))
 	{
-		fprintf(stderr, "%s %s\n", strerror(errno), "data.sah");
-		_getch();
-		_exit(-1);
-	}
+		// ignore the file header
+		fseek(stream, 51, SEEK_SET);
 
-	// ignore the file header
-	fseek(stream, 51, SEEK_SET);
+		int name_length;
+		fread(&name_length, 4, 1, stream);
 
-	int name_size;
-	fread(&name_size, 4, 1, stream);
+		if (name_length == 1)
+		{
+			// read the old format
+			fseek(stream, 1, SEEK_CUR);
+		}
+		else
+		{
+			// read the new format
+			fseek(stream, 5, SEEK_CUR);
+		}
 
-	if (name_size == 1)
-	{
-		// read the old format
-		fseek(stream, 1, SEEK_CUR);
+		_mkdir("Data");
+
+		// read the file contents
+		sah_read("Data", stream);
 	}
 	else
 	{
-		// read the new format
-		fseek(stream, 5, SEEK_CUR);
+		fprintf(stderr, "%s %s\n", strerror(errno), "data.sah");
+		_getch();
+		return -1;
 	}
 
-	_mkdir("Data");
-
-	// read the file contents
-	sah_read("Data", stream);
 	fclose(stream);
 
 	printf("Press any key to exit...\n");
 	_getch();
 
 	_CrtDumpMemoryLeaks();
-
 	return 0;
 }
 
@@ -145,7 +147,7 @@ void saf_read(const char* path, const File* file)
 	// warning C4244
 	void* buffer = malloc(file->length);
 
-	if (fopen_s(&stream, "data.saf", "rb") == 0)
+	if (!fopen_s(&stream, "data.saf", "rb"))
 	{
 		// read the file data from the archive
 		_fseeki64(stream, file->offset, SEEK_SET);
@@ -165,7 +167,7 @@ void saf_read(const char* path, const File* file)
 	char* filename = malloc(length);
 	snprintf(filename, length, "%s\\%s", path, file->name);
 
-	if (freopen_s(&stream, filename, "wb", stream) == 0)
+	if (!freopen_s(&stream, filename, "wb", stream))
 	{
 		// warning C4244
 		fwrite(buffer, file->length, 1, stream);
