@@ -106,7 +106,7 @@ void sah_read(char* path, FILE* stream)
 
 	char* folder = malloc(0);
 
-	// read the and process the folders
+	// read and process the folders
 	for (int i = 0; i < folder_count; ++i)
 	{
 		int name_length;
